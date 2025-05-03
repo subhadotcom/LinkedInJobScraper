@@ -132,6 +132,13 @@
                     <hr>
                     <p class="mb-0">Please try again with different parameters or check the server logs.</p>
                 </div>
+                
+                <div id="info-container" class="alert alert-info" style="display: none;">
+                    <h4 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Information</h4>
+                    <p id="info-message"></p>
+                    <hr>
+                    <p class="mb-0">This is an informational message about the LinkedIn scraper.</p>
+                </div>
             </div>
         </div>
         
@@ -285,8 +292,20 @@
                 if (data.status === 'completed') {
                     if (data.jobs && data.jobs.length > 0) {
                         jobsData = data.jobs;
-                        displayJobsTable(jobsData);
-                        document.getElementById('results-container').style.display = 'block';
+                        
+                        // Check if there's an info message from LinkedIn
+                        if (jobsData.length === 1 && jobsData[0].is_info) {
+                            // Show info message
+                            document.getElementById('info-container').style.display = 'block';
+                            document.getElementById('info-message').textContent = jobsData[0].description;
+                            // Still display the job in the table
+                            displayJobsTable(jobsData);
+                            document.getElementById('results-container').style.display = 'block';
+                        } else {
+                            // Normal job results
+                            displayJobsTable(jobsData);
+                            document.getElementById('results-container').style.display = 'block';
+                        }
                     } else {
                         document.getElementById('no-results-container').style.display = 'block';
                     }
