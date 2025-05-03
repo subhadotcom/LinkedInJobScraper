@@ -47,37 +47,70 @@ def run_scraper(keywords, location, pages):
         scraping_status["jobs"] = []
         scraping_status["error"] = None
         
-        # Initialize scraper
-        scraper = LinkedInJobScraper()
-        
         # Log scraping parameters
         logger.info(f"Starting LinkedIn Job Scraper with parameters:")
         logger.info(f"Keywords: {keywords}")
         logger.info(f"Location: {location}")
         logger.info(f"Pages to scrape: {pages}")
         
-        # Execute scraping
-        scraping_status["jobs"] = scraper.scrape_jobs(
-            keywords=keywords,
-            location=location,
-            pages=pages,
-            status_callback=update_scraping_status
-        )
-        
-        # Update scraping status
-        scraping_status["status"] = "completed"
-        scraping_status["end_time"] = datetime.now()
-        scraping_status["total_jobs"] = len(scraping_status["jobs"])
-        
-        logger.info(f"Scraping completed. Found {scraping_status['total_jobs']} jobs.")
-        
+        try:
+            # Initialize scraper
+            scraper = LinkedInJobScraper()
+            
+            # Execute scraping
+            scraping_status["jobs"] = scraper.scrape_jobs(
+                keywords=keywords,
+                location=location,
+                pages=pages,
+                status_callback=update_scraping_status
+            )
+            
+            # Update scraping status
+            scraping_status["status"] = "completed"
+            scraping_status["total_jobs"] = len(scraping_status["jobs"])
+            logger.info(f"Scraping completed. Found {scraping_status['total_jobs']} jobs.")
+            
+        except Exception as e:
+            logger.error(f"Error during scraping process: {str(e)}")
+            
+            # Check for specific Selenium errors
+            error_message = str(e)
+            if "chromedriver" in error_message.lower() and "127" in error_message:
+                error_message = "Could not start Selenium WebDriver. The system may be missing Chrome/Chromium dependencies."
+            elif "webdriver" in error_message.lower():
+                error_message = "Selenium WebDriver error. Please make sure Chrome/Chromium is installed."
+            
+            scraping_status["error"] = error_message
+            
+            # Create mock data for UI testing if no jobs were found yet
+            if not scraping_status["jobs"] and os.environ.get("ALLOW_MOCK_DATA") == "1":
+                logger.warning("Creating mock data for testing purposes")
+                scraping_status["jobs"] = [{
+                    "id": f"mock{i}",
+                    "title": f"Sample Job {i}",
+                    "company": "Demo Company",
+                    "location": location or "Remote",
+                    "url": "https://linkedin.com/jobs",
+                    "description": "This is a mock job listing for testing purposes.",
+                    "date_posted": datetime.now().strftime("%Y-%m-%d"),
+                    "job_type": "Full-time",
+                    "seniority_level": "Entry level",
+                    "scraped_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "is_mock": True
+                } for i in range(1, 4)]
+                scraping_status["status"] = "partial_error"
+                scraping_status["total_jobs"] = len(scraping_status["jobs"])
+            else:
+                scraping_status["status"] = "error"
+            
     except Exception as e:
-        logger.error(f"Error during scraping: {str(e)}")
+        logger.error(f"Error in scraper thread: {str(e)}")
         scraping_status["status"] = "error"
-        scraping_status["error"] = str(e)
+        scraping_status["error"] = f"General error: {str(e)}"
     
     finally:
         scraping_status["is_scraping"] = False
+        scraping_status["end_time"] = datetime.now()
 
 def update_scraping_status(page, jobs_count):
     """Update scraping status"""
