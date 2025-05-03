@@ -82,4 +82,8 @@ Available options:
 ## Disclaimer
 
 This tool is for educational purposes only. Please respect LinkedIn's terms of service and use responsibly. Excessive scraping may result in IP blocking.
-   
+
+
+## License
+
+This project is licensed under the Apache License - see the LICENSE file for details.
