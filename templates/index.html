@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0"><i class="fas fa-search me-2"></i>LinkedIn Job Scraper</h3>
+            </div>
+            <div class="card-body">
+                <p class="lead">
+                    This tool allows you to scrape job listings from LinkedIn based on keywords and location.
+                </p>
+                
+                <div class="alert alert-info" role="alert">
+                    <i class="fas fa-info-circle me-2"></i> The scraping process may take some time. Please be patient.
+                </div>
+                
+                <form action="{{ url_for('scrape') }}" method="post" class="mt-4">
+                    <div class="mb-3">
+                        <label for="keywords" class="form-label">Keywords <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="keywords" name="keywords" placeholder="e.g. Python Developer" required>
+                        <div class="form-text">Enter job keywords like "Python Developer" or "Marketing Manager"</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="location" class="form-label">Location</label>
+                        <input type="text" class="form-control" id="location" name="location" placeholder="e.g. Remote, New York">
+                        <div class="form-text">Enter job location or leave blank for all locations</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="pages" class="form-label">Pages to Scrape</label>
+                        <select class="form-select" id="pages" name="pages">
+                            <option value="1">1 page (recommended for testing)</option>
+                            <option value="2">2 pages</option>
+                            <option value="3">3 pages</option>
+                            <option value="5">5 pages</option>
+                            <option value="10">10 pages (may take a long time)</option>
+                        </select>
+                        <div class="form-text">LinkedIn shows approximately 25 jobs per page</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-play me-2"></i>Start Scraping
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card shadow mt-4">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0"><i class="fas fa-info-circle me-2"></i>How It Works</h4>
+            </div>
+            <div class="card-body">
+                <ol class="list-group list-group-numbered">
+                    <li class="list-group-item">Enter your job search keywords (required) and location (optional).</li>
+                    <li class="list-group-item">Select the number of pages to scrape (more pages = more results but slower).</li>
+                    <li class="list-group-item">Click "Start Scraping" to begin the process.</li>
+                    <li class="list-group-item">The tool will collect job listings from LinkedIn based on your criteria.</li>
+                    <li class="list-group-item">View the results and export them to CSV or JSON format.</li>
+                </ol>
+                
+                <div class="alert alert-warning mt-3" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i> This tool is for educational purposes only. Please respect LinkedIn's terms of service and use responsibly.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

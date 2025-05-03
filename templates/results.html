@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h3 class="mb-0"><i class="fas fa-list me-2"></i>Scraping Results</h3>
+                <div>
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm">
+                        <i class="fas fa-search me-1"></i>New Search
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="status-container" class="mb-4">
+                    <div class="alert alert-info" role="alert">
+                        <div class="d-flex align-items-center">
+                            <div class="spinner-border spinner-border-sm me-2" role="status" id="status-spinner">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <div id="status-message">Loading scraping status...</div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress mb-3" id="progress-container" style="height: 25px; display: none;">
+                        <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                    </div>
+                    
+                    <div id="status-details" class="row text-center" style="display: none;">
+                        <div class="col-md-3">
+                            <div class="card bg-light text-dark mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="fas fa-clipboard-list"></i></h5>
+                                    <p class="card-text">Jobs Found</p>
+                                    <h3 id="jobs-count">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light text-dark mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="fas fa-file-alt"></i></h5>
+                                    <p class="card-text">Current Page</p>
+                                    <h3 id="current-page">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light text-dark mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="fas fa-clock"></i></h5>
+                                    <p class="card-text">Time Elapsed</p>
+                                    <h3 id="time-elapsed">00:00</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light text-dark mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="fas fa-check-circle"></i></h5>
+                                    <p class="card-text">Status</p>
+                                    <h3 id="status-badge">
+                                        <span class="badge bg-info">Waiting</span>
+                                    </h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="results-container" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4><i class="fas fa-table me-2"></i>Job Listings</h4>
+                        <div class="btn-group">
+                            <form action="{{ url_for('export') }}" method="post" class="me-2">
+                                <input type="hidden" name="format" value="csv">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-file-csv me-1"></i>Export CSV
+                                </button>
+                            </form>
+                            <form action="{{ url_for('export') }}" method="post">
+                                <input type="hidden" name="format" value="json">
+                                <button type="submit" class="btn btn-info">
+                                    <i class="fas fa-file-code me-1"></i>Export JSON
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="jobs-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Title</th>
+                                    <th>Company</th>
+                                    <th>Location</th>
+                                    <th>Job Type</th>
+                                    <th>Seniority</th>
+                                    <th>Date Posted</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="jobs-table-body">
+                                <!-- Jobs will be added here dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <form action="{{ url_for('clear') }}" method="post">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-1"></i>Clear Results
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div id="no-results-container" class="text-center py-5" style="display: none;">
+                    <i class="fas fa-search fa-4x mb-3 text-muted"></i>
+                    <h4 class="text-muted">No Results Found</h4>
+                    <p class="text-muted">Try a different search query or location</p>
+                    <a href="{{ url_for('index') }}" class="btn btn-primary mt-3">
+                        <i class="fas fa-search me-1"></i>New Search
+                    </a>
+                </div>
+                
+                <div id="error-container" class="alert alert-danger" style="display: none;">
+                    <h4 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Error</h4>
+                    <p id="error-message">An error occurred during scraping.</p>
+                    <hr>
+                    <p class="mb-0">Please try again with different parameters or check the server logs.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div id="job-details-modal" class="modal fade" tabindex="-1" aria-labelledby="job-details-title" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="job-details-title">Job Details</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <h5 id="modal-job-title">Job Title</h5>
+                            <p class="text-muted">
+                                <span id="modal-company">Company</span> • 
+                                <span id="modal-location">Location</span>
+                            </p>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="card bg-light text-dark mb-2">
+                                    <div class="card-body py-2">
+                                        <p class="mb-0"><strong>Job Type:</strong> <span id="modal-job-type">Full-time</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light text-dark mb-2">
+                                    <div class="card-body py-2">
+                                        <p class="mb-0"><strong>Level:</strong> <span id="modal-seniority">Entry Level</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light text-dark mb-2">
+                                    <div class="card-body py-2">
+                                        <p class="mb-0"><strong>Posted:</strong> <span id="modal-date">Recently</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6>Job Description</h6>
+                            <div class="card">
+                                <div class="card-body bg-light" id="modal-description">
+                                    Job description will appear here.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="#" class="btn btn-primary" id="modal-job-link" target="_blank">
+                            <i class="fas fa-external-link-alt me-1"></i>View on LinkedIn
+                        </a>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Job details data container
+    let jobsData = [];
+    let statusInterval;
+    let startTime = null;
+    let elapsedTimeInterval;
+    
+    // Function to update elapsed time
+    function updateElapsedTime() {
+        if (!startTime) return;
+        
+        const now = new Date();
+        const elapsed = Math.floor((now - startTime) / 1000); // seconds
+        
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        
+        const formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        document.getElementById('time-elapsed').textContent = formattedTime;
+    }
+    
+    // Function to check scraping status
+    function checkStatus() {
+        fetch('/status')
+            .then(response => response.json())
+            .then(data => {
+                // Set start time if not set and scraping is running
+                if (!startTime && data.status === 'running') {
+                    startTime = new Date();
+                    // Start updating elapsed time
+                    elapsedTimeInterval = setInterval(updateElapsedTime, 1000);
+                }
+                
+                // Update status details
+                document.getElementById('status-details').style.display = 'flex';
+                document.getElementById('jobs-count').textContent = data.jobs_scraped;
+                document.getElementById('current-page').textContent = `${data.current_page} / ${data.total_pages}`;
+                
+                // Update progress bar
+                const progressPercent = data.total_pages > 0 ? Math.round((data.current_page / data.total_pages) * 100) : 0;
+                document.getElementById('progress-container').style.display = 'block';
+                document.getElementById('progress-bar').style.width = `${progressPercent}%`;
+                document.getElementById('progress-bar').setAttribute('aria-valuenow', progressPercent);
+                document.getElementById('progress-bar').textContent = `${progressPercent}%`;
+                
+                // Update status badge
+                let statusBadge = '';
+                let statusMessage = '';
+                
+                switch(data.status) {
+                    case 'idle':
+                        statusBadge = '<span class="badge bg-secondary">Idle</span>';
+                        statusMessage = 'Waiting to start scraping...';
+                        break;
+                    case 'running':
+                        statusBadge = '<span class="badge bg-primary">Running</span>';
+                        statusMessage = `Scraping page ${data.current_page} of ${data.total_pages}...`;
+                        break;
+                    case 'completed':
+                        statusBadge = '<span class="badge bg-success">Completed</span>';
+                        statusMessage = `Scraping completed. Found ${data.jobs_scraped} jobs.`;
+                        // Clear intervals when completed
+                        clearInterval(statusInterval);
+                        break;
+                    case 'error':
+                        statusBadge = '<span class="badge bg-danger">Error</span>';
+                        statusMessage = 'An error occurred during scraping.';
+                        // Show error message
+                        document.getElementById('error-container').style.display = 'block';
+                        document.getElementById('error-message').textContent = data.error || 'Unknown error';
+                        // Clear intervals when error
+                        clearInterval(statusInterval);
+                        break;
+                }
+                
+                document.getElementById('status-badge').innerHTML = statusBadge;
+                document.getElementById('status-message').textContent = statusMessage;
+                
+                // Hide spinner if not running
+                if (data.status !== 'running') {
+                    document.getElementById('status-spinner').style.display = 'none';
+                }
+                
+                // Show results if completed and jobs found
+                if (data.status === 'completed') {
+                    if (data.jobs && data.jobs.length > 0) {
+                        jobsData = data.jobs;
+                        displayJobsTable(jobsData);
+                        document.getElementById('results-container').style.display = 'block';
+                    } else {
+                        document.getElementById('no-results-container').style.display = 'block';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching status:', error);
+                document.getElementById('status-message').textContent = 'Error connecting to server';
+                document.getElementById('status-spinner').style.display = 'none';
+            });
+    }
+    
+    // Function to display jobs in the table
+    function displayJobsTable(jobs) {
+        const tableBody = document.getElementById('jobs-table-body');
+        tableBody.innerHTML = '';
+        
+        jobs.forEach((job, index) => {
+            const row = document.createElement('tr');
+            
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${escapeHtml(job.title || 'N/A')}</td>
+                <td>${escapeHtml(job.company || 'N/A')}</td>
+                <td>${escapeHtml(job.location || 'N/A')}</td>
+                <td>${escapeHtml(job.job_type || 'N/A')}</td>
+                <td>${escapeHtml(job.seniority_level || 'N/A')}</td>
+                <td>${escapeHtml(job.date_posted || 'N/A')}</td>
+                <td>
+                    <button class="btn btn-sm btn-primary view-job-btn" data-job-index="${index}">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </td>
+            `;
+            
+            tableBody.appendChild(row);
+        });
+        
+        // Add event listeners to view buttons
+        document.querySelectorAll('.view-job-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const jobIndex = this.getAttribute('data-job-index');
+                showJobDetails(jobIndex);
+            });
+        });
+    }
+    
+    // Function to show job details in modal
+    function showJobDetails(jobIndex) {
+        const job = jobsData[jobIndex];
+        if (!job) return;
+        
+        // Update modal content
+        document.getElementById('modal-job-title').textContent = job.title || 'N/A';
+        document.getElementById('modal-company').textContent = job.company || 'N/A';
+        document.getElementById('modal-location').textContent = job.location || 'N/A';
+        document.getElementById('modal-job-type').textContent = job.job_type || 'N/A';
+        document.getElementById('modal-seniority').textContent = job.seniority_level || 'N/A';
+        document.getElementById('modal-date').textContent = job.date_posted || 'N/A';
+        document.getElementById('modal-description').textContent = job.description || 'No description available';
+        
+        // Set LinkedIn job link
+        const jobLink = document.getElementById('modal-job-link');
+        if (job.url) {
+            jobLink.href = job.url;
+            jobLink.style.display = 'inline-block';
+        } else {
+            jobLink.style.display = 'none';
+        }
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('job-details-modal'));
+        modal.show();
+    }
+    
+    // Helper function to escape HTML
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Start checking status when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check status immediately
+        checkStatus();
+        
+        // Then check every 2 seconds
+        statusInterval = setInterval(checkStatus, 2000);
+    });
+</script>
+{% endblock %}

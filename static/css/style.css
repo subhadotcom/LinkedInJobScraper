@@ -1,0 +1,63 @@
+/* Custom styles for LinkedIn Job Scraper */
+
+/* Body and general styles */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.footer {
+    margin-top: auto;
+}
+
+/* Card styling */
+.card {
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.card-header {
+    border-bottom: 0;
+}
+
+/* Table styling */
+.table th {
+    font-weight: 600;
+    border-top: none;
+}
+
+/* Modal styling */
+.modal-content {
+    border-radius: 0.5rem;
+}
+
+.modal-header {
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+}
+
+/* Status indicators */
+.progress {
+    height: 1.5rem;
+    border-radius: 0.25rem;
+}
+
+.progress-bar {
+    line-height: 1.5rem;
+    font-size: 0.875rem;
+}
+
+/* Job details */
+#modal-description {
+    max-height: 50vh;
+    overflow-y: auto;
+    white-space: pre-line;
+}
+
+/* Responsive tweaks */
+@media (max-width: 767.98px) {
+    #status-details .card {
+        margin-bottom: 1rem;
+    }
+}
